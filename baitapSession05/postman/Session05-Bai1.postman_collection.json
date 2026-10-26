@@ -1,0 +1,362 @@
+{
+  "info": {
+    "name": "Session05 - Bai2 - PageResponse",
+    "description": "Create three demo courses, then check pagination, sorting, DTOs and invalid parameters. Each run adds one instructor and three courses.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "instructorId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Prepare demo data",
+      "item": [
+        {
+          "name": "01 - Create demo instructor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/instructors",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Session05 Instructor\",\n  \"email\": \"session05@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Instructor created', function () { pm.response.to.have.status(201); pm.expect(pm.response.json().data).to.eql(null); });",
+                  "const location = pm.response.headers.get('Location');",
+                  "pm.test('Capture instructor ID', function () { pm.expect(location).to.match(/\\/instructors\\/\\d+$/); pm.collectionVariables.set('instructorId', location.split('/').pop()); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2 - Create Gamma course",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/courses",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Gamma\",\n  \"status\": \"ACTIVE\",\n  \"instructorId\": {{instructorId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Course created', function () { pm.response.to.have.status(201); pm.expect(pm.response.json().success).to.eql(true); pm.expect(pm.response.json().data).to.eql(null); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3 - Create Alpha course",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/courses",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Alpha\",\n  \"status\": \"ACTIVE\",\n  \"instructorId\": {{instructorId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Course created', function () { pm.response.to.have.status(201); pm.expect(pm.response.json().success).to.eql(true); pm.expect(pm.response.json().data).to.eql(null); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4 - Create Beta course",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/courses",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Beta\",\n  \"status\": \"ACTIVE\",\n  \"instructorId\": {{instructorId}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Course created', function () { pm.response.to.have.status(201); pm.expect(pm.response.json().success).to.eql(true); pm.expect(pm.response.json().data).to.eql(null); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Pageable and Sort",
+      "item": [
+        {
+          "name": "05 - Title ASC, page 0, size 2",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/courses?page=0&size=2&sortBy=title&direction=ASC"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Response is wrapped', function () { pm.expect(body.success).to.eql(true); pm.expect(body.message).to.be.a('string').and.not.empty; });",
+                  "pm.test('Content contains DTOs only', function () { pm.expect(body.data.items).to.be.an('array'); body.data.items.forEach(function (course) { pm.expect(course).to.have.all.keys('id', 'title', 'status', 'instructorId'); }); });",
+                  "pm.test('Correct page metadata', function () { pm.expect(body.data.page).to.eql(0); pm.expect(body.data.size).to.eql(2); pm.expect(body.data.items.length).to.eql(2); pm.expect(body.data.totalItems).to.be.at.least(3); });",
+                  "pm.test('Titles are ascending', function () { const titles = body.data.items.map(c => c.title); pm.expect(titles).to.eql(titles.slice().sort()); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "06 - Next page",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/courses?page=1&size=2&sortBy=title&direction=ASC"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Response is wrapped', function () { pm.expect(body.success).to.eql(true); pm.expect(body.message).to.be.a('string').and.not.empty; });",
+                  "pm.test('Content contains DTOs only', function () { pm.expect(body.data.items).to.be.an('array'); body.data.items.forEach(function (course) { pm.expect(course).to.have.all.keys('id', 'title', 'status', 'instructorId'); }); });",
+                  "pm.test('Second page', function () { pm.expect(body.data.page).to.eql(1); pm.expect(body.data.items.length).to.be.within(1,2); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07 - Defaults",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/courses"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Response is wrapped', function () { pm.expect(body.success).to.eql(true); pm.expect(body.message).to.be.a('string').and.not.empty; });",
+                  "pm.test('Content contains DTOs only', function () { pm.expect(body.data.items).to.be.an('array'); body.data.items.forEach(function (course) { pm.expect(course).to.have.all.keys('id', 'title', 'status', 'instructorId'); }); });",
+                  "pm.test('Default pagination and ID DESC', function () { pm.expect(body.data.page).to.eql(0); pm.expect(body.data.size).to.eql(10); const ids=body.data.items.map(c=>c.id); pm.expect(ids).to.eql(ids.slice().sort((a,b)=>b-a)); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08 - Title DESC",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/courses?page=0&size=2&sortBy=title&direction=DESC"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Response is wrapped', function () { pm.expect(body.success).to.eql(true); pm.expect(body.message).to.be.a('string').and.not.empty; });",
+                  "pm.test('Content contains DTOs only', function () { pm.expect(body.data.items).to.be.an('array'); body.data.items.forEach(function (course) { pm.expect(course).to.have.all.keys('id', 'title', 'status', 'instructorId'); }); });",
+                  "pm.test('Titles are descending', function () { const titles = body.data.items.map(c=>c.title); pm.expect(titles).to.eql(titles.slice().sort().reverse()); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "09 - Negative page becomes zero",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/courses?page=-3&size=2"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Response is wrapped', function () { pm.expect(body.success).to.eql(true); pm.expect(body.message).to.be.a('string').and.not.empty; });",
+                  "pm.test('Content contains DTOs only', function () { pm.expect(body.data.items).to.be.an('array'); body.data.items.forEach(function (course) { pm.expect(course).to.have.all.keys('id', 'title', 'status', 'instructorId'); }); });",
+                  "pm.test('Negative page normalized', function () { pm.expect(body.data.page).to.eql(0); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10 - Page beyond the last page",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/courses?page=1000000&size=2"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP status is 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Response is wrapped', function () { pm.expect(body.success).to.eql(true); pm.expect(body.message).to.be.a('string').and.not.empty; });",
+                  "pm.test('Content contains DTOs only', function () { pm.expect(body.data.items).to.be.an('array'); body.data.items.forEach(function (course) { pm.expect(course).to.have.all.keys('id', 'title', 'status', 'instructorId'); }); });",
+                  "pm.test('Empty page is successful', function () { pm.expect(body.data.items).to.eql([]); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "11 - Invalid size",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/courses?size=0"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Invalid input returns 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Error is wrapped', function () { const body=pm.response.json(); pm.expect(body.success).to.eql(false); pm.expect(body.data).to.eql(null); pm.expect(body.message).to.be.a('string').and.not.empty; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12 - Invalid sortBy",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/courses?sortBy=doesNotExist"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Invalid input returns 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Error is wrapped', function () { const body=pm.response.json(); pm.expect(body.success).to.eql(false); pm.expect(body.data).to.eql(null); pm.expect(body.message).to.be.a('string').and.not.empty; });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "13 - Invalid direction",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/courses?direction=SIDEWAYS"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Invalid input returns 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Error is wrapped', function () { const body=pm.response.json(); pm.expect(body.success).to.eql(false); pm.expect(body.data).to.eql(null); pm.expect(body.message).to.be.a('string').and.not.empty; });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

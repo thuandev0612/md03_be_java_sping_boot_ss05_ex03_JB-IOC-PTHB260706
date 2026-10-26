@@ -1,0 +1,25 @@
+{
+  "success": true,
+  "message": "Lấy danh sách khóa học thành công",
+  "data": {
+    "items": [
+      {
+        "id": 2,
+        "title": "Alpha",
+        "status": "ACTIVE",
+        "instructorId": 1
+      },
+      {
+        "id": 3,
+        "title": "Beta",
+        "status": "ACTIVE",
+        "instructorId": 1
+      }
+    ],
+    "page": 0,
+    "size": 2,
+    "totalItems": 3,
+    "totalPages": 2,
+    "last": false
+  }
+}
